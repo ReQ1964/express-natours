@@ -1,9 +1,31 @@
-import { Request, Response, ErrorRequestHandler } from 'express';
+import {
+	Request,
+	Response,
+	ErrorRequestHandler,
+	NextFunction,
+	RequestParamHandler,
+} from 'express';
 const fs = require('fs');
 
 const tours = JSON.parse(
 	fs.readFileSync(`${__dirname}/../dev-data/data/tours-simple.json`)
 );
+
+const checkID = (
+	req: Request,
+	res: Response,
+	next: NextFunction,
+	val: RequestParamHandler
+) => {
+	if (parseInt(req.params.id) > tours.length) {
+		console.log(`Tour id is ${val}`);
+
+		return res.status(404).json({
+			status: 'fail',
+			message: 'Invalid ID',
+		});
+	}
+};
 
 const getAllTours = (req: Request, res: Response) => {
 	res.status(200).json({
@@ -16,7 +38,6 @@ const getAllTours = (req: Request, res: Response) => {
 };
 
 const getTour = (req: Request, res: Response) => {
-	console.log(req.params);
 	const id = parseInt(req.params.id);
 
 	const tour = tours.find((el: any) => el.id === id);
@@ -36,7 +57,7 @@ const createTour = (req: Request, res: Response) => {
 	tours.push(newTour);
 
 	fs.writeFile(
-		`${__dirname}/dev-data/data/tours-simple.json`,
+		`${__dirname}/../dev-data/data/tours-simple.json`,
 		JSON.stringify(tours),
 		(_err: ErrorRequestHandler) => {
 			res.status(201).json({
@@ -50,12 +71,26 @@ const createTour = (req: Request, res: Response) => {
 };
 
 const updateTour = (req: Request, res: Response) => {
-	res.status(200).json({
-		status: 'success',
-		data: {
-			tour: '<Updated tour here...>',
-		},
+	const id = parseInt(req.params.id);
+	const tour = tours.find((el: any) => el.id === id);
+	const updatedTour = Object.assign(tour, req.body);
+
+	const updatedTours = tours.map((singleTour: any) => {
+		return singleTour.id === updatedTour.id ? updatedTour : tour;
 	});
+
+	fs.writeFile(
+		`${__dirname}/../dev-data/data/tours-simple.json`,
+		JSON.stringify(updatedTours),
+		(_err: ErrorRequestHandler) => {
+			res.status(200).json({
+				status: 'success',
+				data: {
+					tour: updatedTour,
+				},
+			});
+		}
+	);
 };
 
 const deleteTour = (req: Request, res: Response) => {
@@ -65,4 +100,4 @@ const deleteTour = (req: Request, res: Response) => {
 	});
 };
 
-export { getAllTours, getTour, createTour, updateTour, deleteTour };
+export { getAllTours, getTour, createTour, updateTour, deleteTour, checkID };
