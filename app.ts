@@ -1,6 +1,5 @@
 const express = require('express');
 const morgan = require('morgan');
-require('dotenv').config();
 
 import tourRouter from './routes/tourRoutes';
 import userRouter from './routes/userRoutes';
