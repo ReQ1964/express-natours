@@ -1,16 +1,19 @@
-import { Request, Response, ErrorRequestHandler, NextFunction, RequestParamHandler } from 'express';
-const fs = require('fs');
+import { NextFunction, Request, Response } from 'express';
 import Tour from '../models/tourModel';
+import { modifyQuery } from './modifyQuery';
+
+const aliasTopTours = (req: Request, res: Response, next: NextFunction) => {
+  req.query.limit = '5';
+  req.query.sort = '-ratingsAverage,price';
+  req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  next();
+};
 
 const getAllTours = async (req: Request, res: Response) => {
   try {
-    const queryObj = { ...req.query };
-    const excludedFields = ['page', 'sort', 'limit', 'fields'];
-    excludedFields.forEach((el) => delete queryObj[el]);
+    const data = modifyQuery(req, res, Tour);
 
-    const query = Tour.find(queryObj);
-
-    const tours = await query;
+    const tours = await data;
 
     res.status(200).json({
       status: 'success',
@@ -99,4 +102,4 @@ const deleteTour = async (req: Request, res: Response) => {
   }
 };
 
-export { getAllTours, getTour, createTour, updateTour, deleteTour };
+export { aliasTopTours, getAllTours, getTour, createTour, updateTour, deleteTour };
